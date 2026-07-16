@@ -1,26 +1,113 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b1420;
+  --foreground: #fdfdfd;
+  --surface: #18273d;
+  --ink: #10161f;
+}
+
+/* Big Hero 6 palette override — remaps the Tailwind color scales already
+   used throughout the app (indigo/purple/emerald/amber/red/sky) so every
+   existing utility class picks up the new brand colors automatically. */
+@theme {
+  --color-indigo-300: #adaee0;
+  --color-indigo-400: #8981ce;
+  --color-indigo-500: #5a52b0;
+  --color-indigo-600: #3f3a9e;
+  --color-indigo-700: #302c7e;
+  --color-indigo-950: #14122f;
+
+  --color-purple-400: #9c86d9;
+  --color-purple-500: #7654c8;
+  --color-purple-600: #6942a1;
+
+  --color-emerald-300: #93e3c7;
+  --color-emerald-400: #63d8b1;
+  --color-emerald-500: #3fb894;
+
+  --color-amber-200: #fbeea6;
+  --color-amber-300: #f7e27e;
+  --color-amber-400: #f4d84a;
+  --color-amber-500: #ddbe2e;
+
+  --color-red-300: #e8929b;
+  --color-red-400: #be2633;
+  --color-red-500: #a80d1e;
+
+  --color-sky-200: #b4edf0;
+  --color-sky-300: #7edee3;
+  --color-sky-400: #27c3d1;
+  --color-sky-500: #1d9ca8;
+
+  /* neutral scale retinted blue-steel (Steel Blue / Soft Armor Gray) so
+     every existing text-zinc and border-zinc usage reads on-theme too */
+  --color-zinc-50: #f5f8fa;
+  --color-zinc-100: #eaf0f4;
+  --color-zinc-200: #dce4eb;
+  --color-zinc-300: #b7c4ce;
+  --color-zinc-400: #8fa3b0;
+  --color-zinc-500: #6f8593;
+  --color-zinc-600: #526270;
+  --color-zinc-700: #3a4753;
+  --color-zinc-800: #263038;
+  --color-zinc-900: #182026;
+  --color-zinc-950: #0e141a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-on-accent: var(--ink);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Light mode — swaps the page canvas, primary "white" ink and the
+   readable-text end of the neutral scale. Surfaces (code windows, the
+   dashboard chrome tint) and the brand accent hues stay constant across
+   both themes, only the neutrals and the base canvas flip. */
+:root[data-theme="light"] {
+  --background: #f4f7f9;
+  --foreground: #16233a;
+
+  --color-white: #16233a;
+
+  --color-zinc-300: #9fb0bb;
+  --color-zinc-400: #6f8593;
+  --color-zinc-500: #526270;
+  --color-zinc-600: #3a4753;
+  --color-zinc-700: #263038;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 90% 55% at 15% -10%, rgba(63, 58, 158, 0.45), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(39, 195, 209, 0.16), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 90% 100%, rgba(118, 84, 200, 0.28), transparent 60%),
+    var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(ellipse 90% 55% at 15% -10%, rgba(63, 58, 158, 0.12), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(39, 195, 209, 0.1), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 90% 100%, rgba(118, 84, 200, 0.08), transparent 60%),
+    var(--background);
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+:root[data-theme="light"] .bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(16, 22, 31, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 22, 31, 0.06) 1px, transparent 1px);
 }
