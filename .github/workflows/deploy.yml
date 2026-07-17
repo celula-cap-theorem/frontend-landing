@@ -57,9 +57,10 @@ jobs:
             docker pull ghcr.io/${{ env.IMAGE_NAME }}:latest
             docker stop cap-theorem-frontend || true
             docker rm cap-theorem-frontend || true
+            docker network create proxy 2>/dev/null || true
             docker run -d \
               --name cap-theorem-frontend \
               --restart unless-stopped \
-              -p 127.0.0.1:3000:3000 \
+              --network proxy \
               ghcr.io/${{ env.IMAGE_NAME }}:latest
             docker image prune -f
