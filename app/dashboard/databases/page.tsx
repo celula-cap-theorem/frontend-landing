@@ -1,4 +1,7 @@
+import { cookies } from "next/headers";
 import { Clock, Database, Globe, MoreVertical, Plus, Search } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import type { DatabaseConnection } from "@/lib/types";
 
 const databases = [
   {
@@ -43,7 +46,20 @@ const databases = [
   },
 ];
 
-export default function DatabasesPage() {
+async function getMyDatabase(): Promise<DatabaseConnection | null> {
+  const token = (await cookies()).get("ct_token")?.value;
+  if (!token) return null;
+
+  try {
+    return await apiFetch<DatabaseConnection>("/api/databases/mine", token);
+  } catch {
+    return null;
+  }
+}
+
+export default async function DatabasesPage() {
+  const mine = await getMyDatabase();
+
   return (
     <div className="p-6 lg:p-8">
       <div className="flex items-start justify-between">
@@ -80,14 +96,49 @@ export default function DatabasesPage() {
             <tr className="text-zinc-500">
               <th className="px-6 py-3 font-medium">Nombre</th>
               <th className="px-6 py-3 font-medium">Estado</th>
-              <th className="px-6 py-3 font-medium">Espacio</th>
-              <th className="px-6 py-3 font-medium">TTL</th>
-              <th className="px-6 py-3 font-medium">Conexiones</th>
-              <th className="px-6 py-3 font-medium">Región</th>
+              <th className="px-6 py-3 font-medium">Host</th>
+              <th className="px-6 py-3 font-medium">Motor</th>
               <th className="px-6 py-3 font-medium">Creada</th>
               <th className="px-6 py-3 font-medium">Acciones</th>
             </tr>
           </thead>
+          <tbody>
+            {mine && (
+              <tr className="border-t border-white/10 bg-indigo-500/[0.04]">
+                <td className="px-6 py-4">
+                  <span className="flex items-center gap-2 font-mono text-zinc-200">
+                    <Database className="h-4 w-4 text-indigo-400" />
+                    {mine.dbName}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400 px-2.5 py-1 text-xs font-semibold text-on-accent">
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                    {mine.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-zinc-400">
+                  {mine.host}:{mine.port}
+                </td>
+                <td className="px-6 py-4 text-zinc-400">{mine.engine}</td>
+                <td className="px-6 py-4 text-zinc-400">
+                  {new Date(mine.createdAt).toLocaleDateString("es")}
+                </td>
+                <td className="px-6 py-4">
+                  <button className="text-zinc-500 hover:text-zinc-200">
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        <div className="border-t border-white/10 px-6 py-2 text-xs text-zinc-600">
+          Filas abajo son datos de demostración
+        </div>
+
+        <table className="w-full text-left text-sm">
           <tbody>
             {databases.map((db) => (
               <tr key={db.name} className="border-t border-white/10">
@@ -132,12 +183,6 @@ export default function DatabasesPage() {
                     <Globe className="h-3.5 w-3.5" />
                     {db.region}
                   </span>
-                </td>
-                <td className="px-6 py-4 text-zinc-400">{db.created}</td>
-                <td className="px-6 py-4">
-                  <button className="text-zinc-500 hover:text-zinc-200">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
                 </td>
               </tr>
             ))}
