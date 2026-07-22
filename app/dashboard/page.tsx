@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { ConnectionsChart } from "@/components/dashboard/ConnectionsChart";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TrafficChart } from "@/components/dashboard/TrafficChart";
-import { apiFetch, ApiError } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import type { DashboardData } from "@/lib/types";
 import {
   Activity,
@@ -60,9 +60,8 @@ async function getDashboardData(): Promise<DashboardData | null> {
 
   try {
     return await apiFetch<DashboardData>("/api/dashboard", token);
-  } catch (err) {
-    if (err instanceof ApiError) return null;
-    throw err;
+  } catch {
+    return null;
   }
 }
 
