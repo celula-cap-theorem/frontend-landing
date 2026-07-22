@@ -80,30 +80,20 @@ export default async function DatabasesPage() {
         </a>
       </div>
 
-      <div className="mt-6 rounded-xl border border-white/10">
-        <div className="border-b border-white/10 p-4">
-          <div className="flex max-w-sm items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-500">
-            <Search className="h-4 w-4" />
-            <input
-              placeholder="Buscar base de datos..."
-              className="w-full bg-transparent outline-none placeholder:text-zinc-500"
-            />
-          </div>
-        </div>
-
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="text-zinc-500">
-              <th className="px-6 py-3 font-medium">Nombre</th>
-              <th className="px-6 py-3 font-medium">Estado</th>
-              <th className="px-6 py-3 font-medium">Host</th>
-              <th className="px-6 py-3 font-medium">Motor</th>
-              <th className="px-6 py-3 font-medium">Creada</th>
-              <th className="px-6 py-3 font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mine && (
+      {mine && (
+        <div className="mt-6 rounded-xl border border-white/10">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-zinc-500">
+                <th className="px-6 py-3 font-medium">Nombre</th>
+                <th className="px-6 py-3 font-medium">Estado</th>
+                <th className="px-6 py-3 font-medium">Host</th>
+                <th className="px-6 py-3 font-medium">Motor</th>
+                <th className="px-6 py-3 font-medium">Creada</th>
+                <th className="px-6 py-3 font-medium">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
               <tr className="border-t border-white/10 bg-indigo-500/[0.04]">
                 <td className="px-6 py-4">
                   <span className="flex items-center gap-2 font-mono text-zinc-200">
@@ -130,15 +120,35 @@ export default async function DatabasesPage() {
                   </button>
                 </td>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        <div className="border-t border-white/10 px-6 py-2 text-xs text-zinc-600">
-          Filas abajo son datos de demostración
+      <div className="mt-6 rounded-xl border border-white/10">
+        <div className="border-b border-white/10 p-4">
+          <div className="flex max-w-sm items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-500">
+            <Search className="h-4 w-4" />
+            <input
+              placeholder="Buscar base de datos..."
+              className="w-full bg-transparent outline-none placeholder:text-zinc-500"
+            />
+          </div>
         </div>
 
         <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="text-zinc-500">
+              <th className="px-6 py-3 font-medium">Nombre</th>
+              <th className="px-6 py-3 font-medium">Estado</th>
+              <th className="px-6 py-3 font-medium">Espacio</th>
+              <th className="px-6 py-3 font-medium">TTL</th>
+              <th className="px-6 py-3 font-medium">Conexiones</th>
+              <th className="px-6 py-3 font-medium">Región</th>
+              <th className="px-6 py-3 font-medium">Creada</th>
+              <th className="px-6 py-3 font-medium">Acciones</th>
+            </tr>
+          </thead>
           <tbody>
             {databases.map((db) => (
               <tr key={db.name} className="border-t border-white/10">
@@ -183,6 +193,12 @@ export default async function DatabasesPage() {
                     <Globe className="h-3.5 w-3.5" />
                     {db.region}
                   </span>
+                </td>
+                <td className="px-6 py-4 text-zinc-400">{db.created}</td>
+                <td className="px-6 py-4">
+                  <button className="text-zinc-500 hover:text-zinc-200">
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
                 </td>
               </tr>
             ))}
