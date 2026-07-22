@@ -35,7 +35,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-3">
           <a
-            href="#"
+            href="/login"
             className="hidden text-sm text-zinc-300 hover:text-white sm:block"
           >
             Iniciar sesión
