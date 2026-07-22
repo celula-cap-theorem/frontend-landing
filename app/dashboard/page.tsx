@@ -1,6 +1,9 @@
+import { cookies } from "next/headers";
 import { ConnectionsChart } from "@/components/dashboard/ConnectionsChart";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TrafficChart } from "@/components/dashboard/TrafficChart";
+import { apiFetch, ApiError } from "@/lib/api";
+import type { DashboardData } from "@/lib/types";
 import {
   Activity,
   AlertTriangle,
@@ -51,7 +54,25 @@ const activity = [
   },
 ];
 
-export default function OverviewPage() {
+async function getDashboardData(): Promise<DashboardData | null> {
+  const token = (await cookies()).get("ct_token")?.value;
+  if (!token) return null;
+
+  try {
+    return await apiFetch<DashboardData>("/api/dashboard", token);
+  } catch (err) {
+    if (err instanceof ApiError) return null;
+    throw err;
+  }
+}
+
+function formatMb(bytes: number) {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export default async function OverviewPage() {
+  const dashboard = await getDashboardData();
+
   return (
     <div className="p-6 lg:p-8">
       <div className="flex items-start justify-between">
@@ -70,12 +91,33 @@ export default function OverviewPage() {
         </a>
       </div>
 
+      {dashboard && (
+        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <StatCard
+            icon={CheckCircle2}
+            color="emerald"
+            value={dashboard.status}
+            label="Estado de tu base"
+            change="Datos en vivo"
+            positive
+          />
+          <StatCard
+            icon={HardDrive}
+            color="sky"
+            value={formatMb(dashboard.usedBytes)}
+            label={`de ${formatMb(dashboard.maxBytes)} usados`}
+            change="Datos en vivo"
+            positive
+          />
+        </div>
+      )}
+
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={Database}
           color="emerald"
           value="3"
-          label="Bases activas"
+          label="Bases activas (demo)"
           change="12%"
           positive
         />
@@ -83,7 +125,7 @@ export default function OverviewPage() {
           icon={HardDrive}
           color="sky"
           value="37.9 MB"
-          label="Espacio usado"
+          label="Espacio usado (demo)"
           change="5%"
           positive
         />
@@ -91,7 +133,7 @@ export default function OverviewPage() {
           icon={Activity}
           color="purple"
           value="34.6K"
-          label="Tráfico (7d)"
+          label="Tráfico (7d) (demo)"
           change="18%"
           positive
         />
@@ -99,7 +141,7 @@ export default function OverviewPage() {
           icon={Link2}
           color="amber"
           value="9"
-          label="Conexiones"
+          label="Conexiones (demo)"
           change="3%"
           positive={false}
         />
@@ -112,7 +154,7 @@ export default function OverviewPage() {
               <h3 className="font-semibold text-white">
                 Tráfico de solicitudes
               </h3>
-              <p className="text-sm text-zinc-500">Últimos 7 días</p>
+              <p className="text-sm text-zinc-500">Últimos 7 días (demo)</p>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
               ↑ 18%
@@ -128,7 +170,7 @@ export default function OverviewPage() {
             <h3 className="font-semibold text-white">
               Conexiones concurrentes
             </h3>
-            <p className="text-sm text-zinc-500">Hoy por hora</p>
+            <p className="text-sm text-zinc-500">Hoy por hora (demo)</p>
           </div>
           <div className="mt-6">
             <ConnectionsChart />
@@ -138,7 +180,7 @@ export default function OverviewPage() {
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="rounded-xl border border-white/10 p-5">
-          <h3 className="font-semibold text-white">Actividad reciente</h3>
+          <h3 className="font-semibold text-white">Actividad reciente (demo)</h3>
           <div className="mt-4 space-y-4">
             {activity.map(({ icon: Icon, color, title, subtitle }, i) => (
               <div key={i} className="flex items-start gap-3">
@@ -160,7 +202,7 @@ export default function OverviewPage() {
 
         <div className="flex flex-col gap-5">
           <div className="rounded-xl border border-white/10 p-5">
-            <h3 className="font-semibold text-white">Alertas</h3>
+            <h3 className="font-semibold text-white">Alertas (demo)</h3>
             <div className="mt-4 space-y-3">
               <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200">
                 <AlertTriangle className="mb-1 h-4 w-4 text-amber-400" />
