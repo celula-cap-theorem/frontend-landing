@@ -7,6 +7,7 @@ import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Navbar } from "@/components/Navbar";
 import { Security } from "@/components/Security";
+import { Stats } from "@/components/Stats";
 import { apiFetch } from "@/lib/api";
 import type { LandingMetrics } from "@/lib/types";
 
@@ -26,6 +27,7 @@ export default async function Home() {
       <Navbar />
       <main className="flex-1">
         <Hero metrics={metrics} />
+        <Stats metrics={metrics} />
         <Features />
         <HowItWorks />
         <Architecture />

@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, Database, Globe, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Check, Database, Globe, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const steps = [
@@ -44,11 +45,33 @@ const regions = [
 ];
 
 export default function NewDatabasePage() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [region, setRegion] = useState("us-east");
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const regionLabel = regions.find((r) => r.key === region)?.label ?? "";
+
+  async function handleCreate() {
+    setCreating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/databases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, region }),
+      });
+      if (!res.ok) {
+        throw new Error(res.status === 401 ? "Tu sesión expiró, iniciá sesión de nuevo." : "No se pudo crear la base de datos.");
+      }
+      router.push("/dashboard/databases");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear la base de datos.");
+      setCreating(false);
+    }
+  }
 
   return (
     <div className="p-6 lg:p-8">
@@ -238,21 +261,34 @@ export default function NewDatabasePage() {
               ))}
             </div>
 
+            {error && (
+              <div className="mt-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {error}
+              </div>
+            )}
+
             <div className="mt-6 flex justify-between">
               <button
                 onClick={() => setStep(1)}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-white/5"
+                disabled={creating}
+                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Atrás
               </button>
-              <Link
-                href="/dashboard/databases"
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-medium text-white hover:from-indigo-500 hover:to-purple-500"
+              <button
+                onClick={handleCreate}
+                disabled={creating}
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-medium text-white hover:from-indigo-500 hover:to-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <Sparkles className="h-4 w-4" />
-                Crear base de datos
-              </Link>
+                {creating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                {creating ? "Creando..." : "Crear base de datos"}
+              </button>
             </div>
           </div>
         )}
