@@ -11,6 +11,7 @@ export interface DatabaseConnection {
   port: number;
   dbName: string;
   dbUser: string;
+  password: string;
   engine: string;
   createdAt: string;
   status: string;

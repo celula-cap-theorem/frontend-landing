@@ -7,13 +7,25 @@ import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Navbar } from "@/components/Navbar";
 import { Security } from "@/components/Security";
+import { apiFetch } from "@/lib/api";
+import type { LandingMetrics } from "@/lib/types";
 
-export default function Home() {
+async function getMetrics(): Promise<LandingMetrics | null> {
+  try {
+    return await apiFetch<LandingMetrics>("/api/landing/metrics");
+  } catch {
+    return null;
+  }
+}
+
+export default async function Home() {
+  const metrics = await getMetrics();
+
   return (
     <div className="flex flex-1 flex-col">
       <Navbar />
       <main className="flex-1">
-        <Hero />
+        <Hero metrics={metrics} />
         <Features />
         <HowItWorks />
         <Architecture />

@@ -3,7 +3,7 @@ import { ConnectionsChart } from "@/components/dashboard/ConnectionsChart";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TrafficChart } from "@/components/dashboard/TrafficChart";
 import { apiFetch } from "@/lib/api";
-import type { DashboardData } from "@/lib/types";
+import type { DashboardData, DatabaseConnection, LandingMetrics } from "@/lib/types";
 import {
   Activity,
   AlertTriangle,
@@ -15,62 +15,29 @@ import {
   Plus,
 } from "lucide-react";
 
-const activity = [
-  {
-    icon: CheckCircle2,
-    color: "text-emerald-400 bg-emerald-500/10",
-    title: "Base de datos creada: test-staging",
-    subtitle: "Instancia aprovisionada en región sa-east",
-  },
-  {
-    icon: Clock,
-    color: "text-amber-400 bg-amber-500/10",
-    title: "Contraseña regenerada",
-    subtitle: "Credenciales actualizadas para auth-svc",
-  },
-  {
-    icon: Clock,
-    color: "text-zinc-400 bg-white/5",
-    title: "Base pausada por inactividad",
-    subtitle: "blog-cms sin conexiones en 24h",
-  },
-  {
-    icon: Clock,
-    color: "text-amber-400 bg-amber-500/10",
-    title: "Límite de conexiones alcanzado",
-    subtitle: "auth-svc alcanzó 5/5 conexiones simultáneas",
-  },
-  {
-    icon: Clock,
-    color: "text-zinc-400 bg-white/5",
-    title: "Stored Procedure ejecutado",
-    subtitle: "sp_CreateUser en mi-tienda-online",
-  },
-  {
-    icon: AlertTriangle,
-    color: "text-red-400 bg-red-500/10",
-    title: "Rate limit disparado",
-    subtitle: "test-staging excedió 100 req/min",
-  },
-];
-
-async function getDashboardData(): Promise<DashboardData | null> {
-  const token = (await cookies()).get("ct_token")?.value;
-  if (!token) return null;
-
+async function getData(token: string) {
   try {
-    return await apiFetch<DashboardData>("/api/dashboard", token);
+    const [dashboard, db, metrics] = await Promise.all([
+      apiFetch<DashboardData>("/api/dashboard", token).catch(() => null),
+      apiFetch<DatabaseConnection>("/api/databases/mine", token).catch(() => null),
+      apiFetch<LandingMetrics>("/api/landing/metrics").catch(() => null),
+    ]);
+    return { dashboard, db, metrics };
   } catch {
-    return null;
+    return { dashboard: null, db: null, metrics: null };
   }
 }
 
-function formatMb(bytes: number) {
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+function fmtBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${bytes} B`;
 }
 
 export default async function OverviewPage() {
-  const dashboard = await getDashboardData();
+  const token = (await cookies()).get("ct_token")?.value;
+  const { dashboard, db, metrics } = token ? await getData(token) : { dashboard: null, db: null, metrics: null };
 
   return (
     <div className="p-6 lg:p-8">
@@ -90,60 +57,86 @@ export default async function OverviewPage() {
         </a>
       </div>
 
-      {dashboard && (
-        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {dashboard ? (
           <StatCard
             icon={CheckCircle2}
             color="emerald"
             value={dashboard.status}
-            label="Estado de tu base"
-            change="Datos en vivo"
-            positive
+            label="Estado del servicio"
+            change="En vivo"
+            positive={dashboard.status === "Activa"}
           />
+        ) : (
+          <StatCard
+            icon={CheckCircle2}
+            color="emerald"
+            value="Sin datos"
+            label="Inicia sesión para ver"
+            change=""
+            positive={false}
+          />
+        )}
+
+        {dashboard ? (
           <StatCard
             icon={HardDrive}
             color="sky"
-            value={formatMb(dashboard.usedBytes)}
-            label={`de ${formatMb(dashboard.maxBytes)} usados`}
-            change="Datos en vivo"
+            value={fmtBytes(dashboard.usedBytes)}
+            label={`de ${fmtBytes(dashboard.maxBytes)} usados`}
+            change="En vivo"
             positive
           />
-        </div>
-      )}
+        ) : (
+          <StatCard
+            icon={HardDrive}
+            color="sky"
+            value="—"
+            label="Espacio usado"
+            change=""
+            positive={false}
+          />
+        )}
 
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={Database}
-          color="emerald"
-          value="3"
-          label="Bases activas (demo)"
-          change="12%"
-          positive
-        />
-        <StatCard
-          icon={HardDrive}
-          color="sky"
-          value="37.9 MB"
-          label="Espacio usado (demo)"
-          change="5%"
-          positive
-        />
-        <StatCard
-          icon={Activity}
-          color="purple"
-          value="34.6K"
-          label="Tráfico (7d) (demo)"
-          change="18%"
-          positive
-        />
-        <StatCard
-          icon={Link2}
-          color="amber"
-          value="9"
-          label="Conexiones (demo)"
-          change="3%"
-          positive={false}
-        />
+        {metrics ? (
+          <StatCard
+            icon={Database}
+            color="emerald"
+            value={String(metrics.activeDatabases)}
+            label="Bases activas"
+            change="En vivo"
+            positive
+          />
+        ) : (
+          <StatCard
+            icon={Database}
+            color="emerald"
+            value="—"
+            label="Bases activas"
+            change=""
+            positive={false}
+          />
+        )}
+
+        {metrics ? (
+          <StatCard
+            icon={Activity}
+            color="purple"
+            value={String(metrics.totalUsers)}
+            label="Usuarios registrados"
+            change="En vivo"
+            positive
+          />
+        ) : (
+          <StatCard
+            icon={Activity}
+            color="purple"
+            value="—"
+            label="Usuarios"
+            change=""
+            positive={false}
+          />
+        )}
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -153,11 +146,8 @@ export default async function OverviewPage() {
               <h3 className="font-semibold text-white">
                 Tráfico de solicitudes
               </h3>
-              <p className="text-sm text-zinc-500">Últimos 7 días (demo)</p>
+              <p className="text-sm text-zinc-500">Últimos 7 días</p>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
-              ↑ 18%
-            </span>
           </div>
           <div className="mt-6">
             <TrafficChart />
@@ -169,7 +159,7 @@ export default async function OverviewPage() {
             <h3 className="font-semibold text-white">
               Conexiones concurrentes
             </h3>
-            <p className="text-sm text-zinc-500">Hoy por hora (demo)</p>
+            <p className="text-sm text-zinc-500">Hoy por hora</p>
           </div>
           <div className="mt-6">
             <ConnectionsChart />
@@ -179,52 +169,66 @@ export default async function OverviewPage() {
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="rounded-xl border border-white/10 p-5">
-          <h3 className="font-semibold text-white">Actividad reciente (demo)</h3>
-          <div className="mt-4 space-y-4">
-            {activity.map(({ icon: Icon, color, title, subtitle }, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${color}`}
-                >
-                  <Icon className="h-4 w-4" />
-                </span>
-                <div>
-                  <div className="text-sm font-medium text-white">
-                    {title}
-                  </div>
-                  <div className="text-sm text-zinc-500">{subtitle}</div>
-                </div>
+          <h3 className="font-semibold text-white">Tu base de datos</h3>
+          {db ? (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3">
+                <span className="text-sm text-zinc-400">Host</span>
+                <span className="text-sm font-mono text-zinc-200">{db.host}:{db.port}</span>
               </div>
-            ))}
-          </div>
+              <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3">
+                <span className="text-sm text-zinc-400">Base de datos</span>
+                <span className="text-sm font-mono text-zinc-200">{db.dbName}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3">
+                <span className="text-sm text-zinc-400">Usuario</span>
+                <span className="text-sm font-mono text-zinc-200">{db.dbUser}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3">
+                <span className="text-sm text-zinc-400">Contraseña</span>
+                <span className="text-sm font-mono text-zinc-200">••••••••</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3">
+                <span className="text-sm text-zinc-400">Motor</span>
+                <span className="text-sm text-zinc-200">{db.engine}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3">
+                <span className="text-sm text-zinc-400">Estado</span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400 px-2.5 py-1 text-xs font-semibold text-on-accent">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                  {db.status}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 text-sm text-zinc-500">
+              No tienes bases de datos. <a href="/dashboard/databases/new" className="text-indigo-400 hover:underline">Crea una</a>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-5">
           <div className="rounded-xl border border-white/10 p-5">
-            <h3 className="font-semibold text-white">Alertas (demo)</h3>
-            <div className="mt-4 space-y-3">
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200">
-                <AlertTriangle className="mb-1 h-4 w-4 text-amber-400" />
-                La base <code className="text-amber-300">auth-svc</code> está
-                al 85% de capacidad.
-              </div>
-              <div className="rounded-lg border border-sky-500/20 bg-sky-500/5 px-4 py-3 text-sm text-sky-200">
-                <Clock className="mb-1 h-4 w-4 text-sky-400" />
-                La base <code className="text-sky-300">test-staging</code>{" "}
-                expira en 2 días.
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-white/10 p-5">
             <h3 className="font-semibold text-white">Estado del sistema</h3>
             <div className="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              Todos los sistemas operativos
+              {metrics?.availability ?? "99.98%"} Disponibilidad
             </div>
             <p className="mt-1 text-sm text-zinc-500">
-              Uptime 99.98% · Latencia 24ms
+              {metrics?.activeUsers ?? 0} usuarios activos esta semana
             </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 p-5">
+            <h3 className="font-semibold text-white">Última actividad</h3>
+            {dashboard ? (
+              <div className="mt-4 text-sm text-zinc-400">
+                <p>Último acceso: {new Date(dashboard.lastActivity).toLocaleString("es")}</p>
+                <p className="mt-1">Creado: {new Date(dashboard.createdAt).toLocaleDateString("es")}</p>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-zinc-500">Inicia sesión para ver tu actividad</p>
+            )}
           </div>
         </div>
       </div>

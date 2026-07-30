@@ -1,4 +1,11 @@
 import { ArrowRight, Database, HardDrive, Play, ShieldCheck } from "lucide-react";
+import type { LandingMetrics } from "@/lib/types";
+
+function fmt(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
 
 const dashboardProjects = [
   { name: "base-tienda", env: "online", active: true },
@@ -17,7 +24,7 @@ const sidebarItems = [
 
 const barHeights = [28, 40, 34, 55, 46, 62, 50, 70, 58, 48];
 
-export function Hero() {
+export function Hero({ metrics }: { metrics: LandingMetrics | null }) {
   return (
     <section className="bg-grid relative overflow-hidden border-b border-white/10">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-transparent to-transparent" />
@@ -150,19 +157,19 @@ export function Hero() {
                       Bases activas
                     </div>
                     <div className="mt-1 text-lg font-semibold text-emerald-400">
-                      4
+                      {metrics?.activeDatabases ?? 4}
                     </div>
                   </div>
                   <div className="rounded-lg border border-white/10 p-3">
-                    <div className="text-[11px] text-zinc-500">Espacio</div>
+                    <div className="text-[11px] text-zinc-500">Usuarios</div>
                     <div className="mt-1 text-lg font-semibold text-sky-400">
-                      38 MB
+                      {metrics?.totalUsers ?? 128}
                     </div>
                   </div>
                   <div className="rounded-lg border border-white/10 p-3">
-                    <div className="text-[11px] text-zinc-500">Tráfico</div>
+                    <div className="text-[11px] text-zinc-500">Inicios</div>
                     <div className="mt-1 text-lg font-semibold text-purple-400">
-                      12K
+                      {metrics ? fmt(metrics.totalLogins) : "12K"}
                     </div>
                   </div>
                 </div>
